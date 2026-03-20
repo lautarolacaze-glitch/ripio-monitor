@@ -64,6 +64,51 @@ interface ScanData {
   sitemap_xml: boolean;
 }
 
+interface ApiPage {
+  url: string;
+  title: string | null;
+  description: string | null;
+  h1_count: number;
+  h2_count: number;
+  total_headings: number;
+  canonical_url: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
+  meta_robots: string | null;
+  [key: string]: unknown;
+}
+
+function mapApiPagesToSeo(apiPages: ApiPage[]): PageSeo[] {
+  return apiPages.map((p) => {
+    const hasTitle = !!p.title;
+    const hasDescription = !!p.description;
+    const hasH1 = (p.h1_count ?? 0) > 0;
+    const hasCanonical = !!p.canonical_url;
+    const ogComplete = !!p.og_title && !!p.og_description && !!p.og_image;
+
+    return {
+      url: p.url,
+      title: p.title,
+      description: p.description,
+      h1: hasH1 ? `(${p.h1_count} H1 encontrado(s))` : null,
+      canonical: p.canonical_url,
+      headings: [],
+      og_tags: {
+        title: p.og_title ?? undefined,
+        description: p.og_description ?? undefined,
+        image: p.og_image ?? undefined,
+        url: undefined,
+      },
+      has_title: hasTitle,
+      has_description: hasDescription,
+      has_h1: hasH1,
+      has_canonical: hasCanonical,
+      og_complete: ogComplete,
+    };
+  });
+}
+
 function StatusIcon({ ok }: { ok: boolean }) {
   return ok ? (
     <CheckCircle2 className="h-4 w-4 text-green-400" />
@@ -83,12 +128,17 @@ export default function SeoPage() {
       setLoading(true);
       setError(null);
       const res = await fetch("/api/scan");
+      if (res.status === 404) {
+        setData({ pages: [], robots_txt: false, sitemap_xml: false });
+        return;
+      }
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const json = await res.json();
+      const apiPages: ApiPage[] = json.pages ?? [];
       setData({
-        pages: json.pages ?? [],
-        robots_txt: json.robots_txt ?? false,
-        sitemap_xml: json.sitemap_xml ?? false,
+        pages: mapApiPagesToSeo(apiPages),
+        robots_txt: false,
+        sitemap_xml: false,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar datos");

@@ -26,7 +26,7 @@ import {
   Filter,
 } from "lucide-react";
 
-interface Issue {
+interface ApiIssue {
   id: number;
   scan_id: number;
   page_url: string;
@@ -35,6 +35,13 @@ interface Issue {
   title: string;
   description: string;
   recommendation: string;
+}
+
+interface ApiRecommendation {
+  priority: number;
+  title: string;
+  description: string;
+  issues: ApiIssue[];
 }
 
 interface Recommendation {
@@ -188,7 +195,7 @@ function saveCompleted(completed: Record<string, boolean>) {
 }
 
 export default function RecommendationsPage() {
-  const [issues, setIssues] = useState<Issue[]>([]);
+  const [apiRecommendations, setApiRecommendations] = useState<ApiRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -202,9 +209,14 @@ export default function RecommendationsPage() {
     async function fetchData() {
       try {
         const res = await fetch("/api/scan");
+        if (res.status === 404) {
+          setApiRecommendations([]);
+          setLoading(false);
+          return;
+        }
         if (!res.ok) throw new Error("Error al cargar datos");
         const json = await res.json();
-        setIssues(json.issues ?? []);
+        setApiRecommendations(json.recommendations ?? []);
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Error al cargar datos"
@@ -217,60 +229,48 @@ export default function RecommendationsPage() {
   }, []);
 
   const recommendations: Recommendation[] = useMemo(() => {
-    // Group issues by title + category to form recommendations
-    const groups: Record<
-      string,
-      {
-        title: string;
-        description: string;
-        recommendation: string;
-        category: string;
-        severity: string;
-        urls: Set<string>;
-      }
-    > = {};
+    return apiRecommendations.map((rec, index) => {
+      const issues = rec.issues ?? [];
+      const urls = new Set<string>();
+      let bestCategory = "code";
+      let bestSeverity = "low";
 
-    for (const issue of issues) {
-      const key = `${issue.title}__${issue.category}`;
-      if (!groups[key]) {
-        groups[key] = {
-          title: issue.title,
-          description: issue.description,
-          recommendation: issue.recommendation,
-          category: issue.category,
-          severity: issue.severity,
-          urls: new Set(),
-        };
+      for (const issue of issues) {
+        urls.add(issue.page_url);
+        bestCategory = issue.category;
+        // Escalate severity
+        if (
+          mapPriority(issue.severity) === "alta" &&
+          mapPriority(bestSeverity) !== "alta"
+        ) {
+          bestSeverity = issue.severity;
+        } else if (
+          mapPriority(issue.severity) === "media" &&
+          mapPriority(bestSeverity) === "baja"
+        ) {
+          bestSeverity = issue.severity;
+        }
       }
-      groups[key].urls.add(issue.page_url);
-      // Escalate severity if one is higher
-      if (
-        mapPriority(issue.severity) === "alta" &&
-        mapPriority(groups[key].severity) !== "alta"
-      ) {
-        groups[key].severity = issue.severity;
-      }
-    }
 
-    return Object.entries(groups).map(([key, group]) => {
-      const cat = mapCategory(group.category);
-      const priority = mapPriority(group.severity);
-      const affectedPages = group.urls.size;
+      const cat = mapCategory(bestCategory);
+      const priority = mapPriority(bestSeverity);
+      const affectedPages = urls.size;
       const effort = estimateEffort(affectedPages, cat);
+      const key = `${rec.title}__${index}`;
 
       return {
         id: key,
-        title: group.recommendation || group.title,
-        description: group.description,
+        title: rec.title,
+        description: rec.description,
         category: cat,
         priority,
         effort,
         affectedPages,
-        affectedUrls: Array.from(group.urls),
+        affectedUrls: Array.from(urls),
         completed: !!completedMap[key],
       };
     });
-  }, [issues, completedMap]);
+  }, [apiRecommendations, completedMap]);
 
   const filteredRecommendations = useMemo(() => {
     if (activeCategory === "all") return recommendations;
@@ -325,7 +325,7 @@ export default function RecommendationsPage() {
     );
   }
 
-  if (issues.length === 0) {
+  if (apiRecommendations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
         <Lightbulb className="h-10 w-10 text-slate-500" />

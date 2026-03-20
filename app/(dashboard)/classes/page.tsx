@@ -19,8 +19,36 @@ interface CssClass {
   pages: string[];
 }
 
-interface ScanData {
-  css_classes: CssClass[];
+interface ApiCssClass {
+  id: number;
+  scan_id: number;
+  page_url: string;
+  class_name: string;
+  element_tag: string;
+  frequency: number;
+}
+
+function mapApiCssClasses(raw: ApiCssClass[]): CssClass[] {
+  // Group by class_name + element_tag, aggregate pages
+  const map = new Map<string, CssClass>();
+  for (const item of raw) {
+    const key = `${item.class_name}__${item.element_tag}`;
+    const existing = map.get(key);
+    if (existing) {
+      if (!existing.pages.includes(item.page_url)) {
+        existing.pages.push(item.page_url);
+      }
+      existing.frequency = Math.max(existing.frequency, item.frequency);
+    } else {
+      map.set(key, {
+        name: item.class_name,
+        element: item.element_tag,
+        frequency: item.frequency,
+        pages: [item.page_url],
+      });
+    }
+  }
+  return Array.from(map.values());
 }
 
 export default function ClassesPage() {
@@ -35,9 +63,14 @@ export default function ClassesPage() {
       setLoading(true);
       setError(null);
       const res = await fetch("/api/scan");
+      if (res.status === 404) {
+        setData([]);
+        return;
+      }
       if (!res.ok) throw new Error(`Error ${res.status}`);
-      const json: ScanData = await res.json();
-      setData(json.css_classes ?? []);
+      const json = await res.json();
+      const raw: ApiCssClass[] = json.cssClasses ?? [];
+      setData(mapApiCssClasses(raw));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar datos");
     } finally {

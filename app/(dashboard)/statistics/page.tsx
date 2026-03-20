@@ -76,9 +76,9 @@ interface CustomCodeItem {
 interface ScanResponse {
   scan: { id: number; timestamp: string; pages_scanned: number };
   pages: PageData[];
-  custom_code: CustomCodeItem[];
+  customCode: CustomCodeItem[];
   issues: Array<{ category: string; severity: string }>;
-  css_classes: Array<{ class_name: string; frequency: number }>;
+  cssClasses: Array<{ class_name: string; frequency: number }>;
 }
 
 const fadeIn = {
@@ -210,6 +210,11 @@ export default function StatisticsPage() {
     async function fetchData() {
       try {
         const res = await fetch("/api/scan");
+        if (res.status === 404) {
+          setData(null);
+          setLoading(false);
+          return;
+        }
         if (!res.ok) throw new Error("Error al cargar datos");
         const json = await res.json();
         setData(json);
@@ -225,7 +230,7 @@ export default function StatisticsPage() {
   }, []);
 
   const pages = data?.pages ?? [];
-  const customCode = data?.custom_code ?? [];
+  const customCode = data?.customCode ?? [];
 
   const totalPages = pages.length;
   const totalImages = useMemo(

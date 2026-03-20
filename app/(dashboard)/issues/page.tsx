@@ -35,8 +35,27 @@ interface Issue {
   recommendation: string;
 }
 
-interface ScanData {
-  issues: Issue[];
+interface ApiIssue {
+  id: number;
+  scan_id: number;
+  page_url: string;
+  category: string;
+  severity: string;
+  title: string;
+  description: string;
+  recommendation: string;
+}
+
+function mapApiIssues(raw: ApiIssue[]): Issue[] {
+  return raw.map((item) => ({
+    id: String(item.id),
+    severity: item.severity as Severity,
+    category: item.category as Category,
+    title: item.title,
+    page: item.page_url,
+    description: item.description,
+    recommendation: item.recommendation,
+  }));
 }
 
 const severityConfig: Record<
@@ -157,9 +176,14 @@ export default function IssuesPage() {
       setLoading(true);
       setError(null);
       const res = await fetch("/api/scan");
+      if (res.status === 404) {
+        setData([]);
+        return;
+      }
       if (!res.ok) throw new Error(`Error ${res.status}`);
-      const json: ScanData = await res.json();
-      setData(json.issues ?? []);
+      const json = await res.json();
+      const raw: ApiIssue[] = json.issues ?? [];
+      setData(mapApiIssues(raw));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar datos");
     } finally {

@@ -26,8 +26,37 @@ interface ScanData {
   last_scan: string;
   history: { date: string; score: number }[];
   issues: { severity: string; count: number }[];
-  pages?: unknown[];
-  css_classes?: unknown[];
+}
+
+function mapApiToScanData(json: Record<string, unknown>): ScanData | null {
+  const scan = json.scan as Record<string, unknown> | undefined;
+  const pages = json.pages as Array<Record<string, unknown>> | undefined;
+  const issues = json.issues as Array<Record<string, unknown>> | undefined;
+
+  if (!scan) return null;
+
+  // Aggregate issues by severity
+  const severityCounts: Record<string, number> = {};
+  (issues ?? []).forEach((issue) => {
+    const sev = (issue.severity as string) ?? "unknown";
+    severityCounts[sev] = (severityCounts[sev] ?? 0) + 1;
+  });
+  const issuesChart = Object.entries(severityCounts).map(([severity, count]) => ({
+    severity,
+    count,
+  }));
+
+  const firstPage = pages?.[0];
+
+  return {
+    site_status: firstPage && (firstPage.status_code as number) >= 200 && (firstPage.status_code as number) < 400 ? "up" : "down",
+    response_time_ms: (firstPage?.response_time_ms as number) ?? 0,
+    total_pages: (scan.pages_scanned as number) ?? (pages?.length ?? 0),
+    overall_score: (scan.score as number) ?? 0,
+    last_scan: (scan.timestamp as string) ?? "",
+    history: [],
+    issues: issuesChart,
+  };
 }
 
 const COOLDOWN_SECONDS = 300;
@@ -45,9 +74,13 @@ export default function OverviewPage() {
       setLoading(true);
       setError(null);
       const res = await fetch("/api/scan");
+      if (res.status === 404) {
+        setData(null);
+        return;
+      }
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const json = await res.json();
-      setData(json);
+      setData(mapApiToScanData(json));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar datos");
     } finally {

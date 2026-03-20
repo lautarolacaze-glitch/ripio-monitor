@@ -36,18 +36,52 @@ interface Recommendation {
   impact: "high" | "medium" | "low";
 }
 
+interface DeviceData {
+  score: number;
+  vitals: WebVitals;
+  history: { date: string; score: number }[];
+  recommendations: Recommendation[];
+}
+
 interface PerformanceData {
-  mobile: {
-    score: number;
-    vitals: WebVitals;
-    history: { date: string; score: number }[];
-    recommendations: Recommendation[];
+  mobile: DeviceData;
+  desktop: DeviceData;
+}
+
+interface ApiDeviceData {
+  score: number;
+  lcp: number;
+  fid: number;
+  cls: number;
+  fcp: number;
+  ttfb: number;
+  speedIndex: number;
+}
+
+function mapApiDevice(raw: ApiDeviceData): DeviceData {
+  return {
+    score: raw.score,
+    vitals: {
+      lcp: raw.lcp * 1000,      // seconds -> ms
+      fid: raw.fid,             // already ms
+      cls: raw.cls,             // unitless
+      fcp: raw.fcp * 1000,      // seconds -> ms
+      ttfb: raw.ttfb * 1000,    // seconds -> ms
+      speed_index: raw.speedIndex * 1000, // seconds -> ms
+    },
+    history: [],
+    recommendations: [],
   };
-  desktop: {
-    score: number;
-    vitals: WebVitals;
-    history: { date: string; score: number }[];
-    recommendations: Recommendation[];
+}
+
+function mapApiToPerformanceData(json: Record<string, unknown>): PerformanceData | null {
+  if (json.error) return null;
+  const mobile = json.mobile as ApiDeviceData | undefined;
+  const desktop = json.desktop as ApiDeviceData | undefined;
+  if (!mobile || !desktop) return null;
+  return {
+    mobile: mapApiDevice(mobile),
+    desktop: mapApiDevice(desktop),
   };
 }
 
@@ -105,8 +139,12 @@ export default function PerformancePage() {
       setError(null);
       const res = await fetch("/api/performance");
       if (!res.ok) throw new Error(`Error ${res.status}`);
-      const json: PerformanceData = await res.json();
-      setData(json);
+      const json = await res.json();
+      if (json.error) {
+        setData(null);
+        return;
+      }
+      setData(mapApiToPerformanceData(json));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar datos");
     } finally {

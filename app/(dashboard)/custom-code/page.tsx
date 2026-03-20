@@ -134,9 +134,14 @@ export default function CustomCodePage() {
     async function fetchData() {
       try {
         const res = await fetch("/api/scan");
+        if (res.status === 404) {
+          setData([]);
+          setLoading(false);
+          return;
+        }
         if (!res.ok) throw new Error("Error al cargar datos");
         const json = await res.json();
-        setData(json.custom_code ?? []);
+        setData(json.customCode ?? []);
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Error al cargar datos"
