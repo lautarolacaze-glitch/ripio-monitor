@@ -2,8 +2,8 @@
 
 import {
   ResponsiveContainer,
-  LineChart as RechartsLine,
-  Line,
+  AreaChart as RechartsArea,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -33,7 +33,13 @@ export function LineChart({
         <h3 className="text-sm font-medium text-slate-300">{title}</h3>
       )}
       <ResponsiveContainer width="100%" height={height}>
-        <RechartsLine data={data}>
+        <RechartsArea data={data}>
+          <defs>
+            <linearGradient id={`gradient-${yKey}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="95%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
           <XAxis
             dataKey={xKey}
@@ -53,18 +59,27 @@ export function LineChart({
               borderRadius: 8,
               color: "#e2e8f0",
               fontSize: 12,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+              padding: "8px 12px",
             }}
-            labelStyle={{ color: "#94a3b8" }}
+            labelStyle={{ color: "#94a3b8", marginBottom: 4, fontWeight: 500 }}
+            itemStyle={{ color: "#e2e8f0", fontSize: 12 }}
           />
-          <Line
-            type="monotone"
+          <Area
+            type="monotoneX"
             dataKey={yKey}
             stroke={color}
             strokeWidth={2}
+            fill={`url(#gradient-${yKey})`}
             dot={{ fill: color, r: 3, strokeWidth: 0 }}
-            activeDot={{ r: 5, strokeWidth: 0 }}
+            activeDot={{
+              r: 6,
+              strokeWidth: 3,
+              stroke: `${color}40`,
+              fill: color,
+            }}
           />
-        </RechartsLine>
+        </RechartsArea>
       </ResponsiveContainer>
     </div>
   );

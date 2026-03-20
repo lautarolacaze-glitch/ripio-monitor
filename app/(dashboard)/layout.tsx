@@ -17,7 +17,6 @@ import {
   LogOut,
   Moon,
   Sun,
-  Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +28,7 @@ import {
 } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
 
-const navItems = [
+const analysisItems = [
   { label: "Overview", icon: LayoutDashboard, href: "/" },
   { label: "Clases CSS", icon: Code2, href: "/classes" },
   { label: "Performance", icon: Gauge, href: "/performance" },
@@ -37,38 +36,85 @@ const navItems = [
   { label: "Problemas", icon: AlertTriangle, href: "/issues" },
   { label: "Custom Code", icon: FileCode, href: "/custom-code" },
   { label: "Estadisticas", icon: BarChart3, href: "/statistics" },
+] as const;
+
+const toolItems = [
   { label: "Recomendaciones", icon: Lightbulb, href: "/recommendations" },
   { label: "Configuracion", icon: Settings, href: "/settings" },
 ] as const;
 
+const allNavItems = [...analysisItems, ...toolItems];
+
+function getPageTitle(pathname: string): string {
+  const item = allNavItems.find((item) =>
+    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
+  );
+  return item?.label ?? "Panel de Monitoreo";
+}
+
+function NavLink({
+  item,
+  isActive,
+  onNavigate,
+}: {
+  item: { label: string; icon: typeof LayoutDashboard; href: string };
+  isActive: boolean;
+  onNavigate?: () => void;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        isActive
+          ? "bg-blue-500/10 text-blue-400"
+          : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+      }`}
+    >
+      {isActive && (
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-500" />
+      )}
+      <Icon className="h-4 w-4 shrink-0" />
+      {item.label}
+    </Link>
+  );
+}
+
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
+  function isActive(href: string) {
+    return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  }
+
   return (
     <nav className="flex flex-col gap-1 px-2">
-      {navItems.map((item) => {
-        const isActive =
-          item.href === "/"
-            ? pathname === "/"
-            : pathname.startsWith(item.href);
-        const Icon = item.icon;
+      <span className="mb-1 mt-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        Analisis
+      </span>
+      {analysisItems.map((item) => (
+        <NavLink
+          key={item.href}
+          item={item}
+          isActive={isActive(item.href)}
+          onNavigate={onNavigate}
+        />
+      ))}
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              isActive
-                ? "bg-blue-500/15 text-blue-400"
-                : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
-            }`}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            {item.label}
-          </Link>
-        );
-      })}
+      <div className="mx-3 my-2 border-t border-white/5" />
+
+      <span className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        Herramientas
+      </span>
+      {toolItems.map((item) => (
+        <NavLink
+          key={item.href}
+          item={item}
+          isActive={isActive(item.href)}
+          onNavigate={onNavigate}
+        />
+      ))}
     </nav>
   );
 }
@@ -79,8 +125,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [darkMode, setDarkMode] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pageTitle = getPageTitle(pathname);
 
   function toggleTheme() {
     setDarkMode((prev) => {
@@ -99,12 +147,21 @@ export default function DashboardLayout({
     <div className="flex h-screen overflow-hidden bg-[#0d1526]">
       {/* Desktop sidebar */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-white/5 bg-[#0A1628] lg:flex">
-        <div className="flex h-14 items-center gap-2 border-b border-white/5 px-4">
-          <Monitor className="h-5 w-5 text-blue-400" />
+        {/* Gradient top line */}
+        <div className="h-[2px] w-full bg-gradient-to-r from-blue-500 to-purple-500" />
+        <div className="flex h-14 items-center gap-2.5 border-b border-white/5 px-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-sm font-black text-white shadow-lg shadow-blue-500/20">
+            R
+          </div>
           <span className="text-base font-bold text-white">Ripio Monitor</span>
         </div>
         <div className="flex-1 overflow-y-auto py-3">
           <SidebarNav />
+        </div>
+        <div className="border-t border-white/5 px-4 py-3">
+          <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+            v1.0
+          </span>
         </div>
       </aside>
 
@@ -130,9 +187,12 @@ export default function DashboardLayout({
                 side="left"
                 className="w-60 border-white/5 bg-[#0A1628] p-0"
               >
+                <div className="h-[2px] w-full bg-gradient-to-r from-blue-500 to-purple-500" />
                 <SheetHeader className="border-b border-white/5">
-                  <SheetTitle className="flex items-center gap-2 text-white">
-                    <Monitor className="h-5 w-5 text-blue-400" />
+                  <SheetTitle className="flex items-center gap-2.5 text-white">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-sm font-black text-white shadow-lg shadow-blue-500/20">
+                      R
+                    </div>
                     Ripio Monitor
                   </SheetTitle>
                 </SheetHeader>
@@ -143,7 +203,7 @@ export default function DashboardLayout({
             </Sheet>
 
             <h1 className="text-sm font-semibold text-white lg:text-base">
-              Panel de Monitoreo
+              {pageTitle}
             </h1>
           </div>
 

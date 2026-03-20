@@ -25,7 +25,12 @@ export function ScoreCard({ score, label, size = 120 }: ScoreCardProps) {
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90">
+        {/* Glow effect behind circle */}
+        <div
+          className="absolute inset-0 rounded-full blur-xl opacity-20"
+          style={{ backgroundColor: color }}
+        />
+        <svg width={size} height={size} className="relative -rotate-90">
           {/* Background circle */}
           <circle
             cx={center}
@@ -48,19 +53,20 @@ export function ScoreCard({ score, label, size = 120 }: ScoreCardProps) {
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: offset }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            transition={{ type: "spring", stiffness: 60, damping: 15, mass: 1 }}
           />
         </svg>
         {/* Center text */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
           <motion.span
             className="text-2xl font-bold text-white"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ type: "spring", stiffness: 100, damping: 12, delay: 0.2 }}
           >
             {clamped}
           </motion.span>
+          <span className="text-[10px] text-slate-500">/ 100</span>
         </div>
       </div>
       <span className="text-sm font-medium text-slate-400">{label}</span>

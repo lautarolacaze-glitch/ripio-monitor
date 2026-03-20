@@ -41,11 +41,49 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0A1628] to-[#1a2744] px-4">
-      <Card className="w-full max-w-md border-white/10 bg-[#0f1d32]/80 backdrop-blur-sm">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      {/* Animated gradient background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(135deg, #0A1628 0%, #0f1d32 25%, #1a2744 50%, #0f1d32 75%, #0A1628 100%)",
+          backgroundSize: "400% 400%",
+          animation: "gradientShift 15s ease infinite",
+        }}
+      />
+      {/* Grid pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+
+      <style>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes pulseRing {
+          0% { transform: scale(1); opacity: 0.3; }
+          50% { transform: scale(1.5); opacity: 0; }
+          100% { transform: scale(1); opacity: 0.3; }
+        }
+      `}</style>
+
+      <Card className="relative z-10 w-full max-w-md border-white/10 bg-[#0f1d32]/80 backdrop-blur-sm transition-shadow duration-500 hover:shadow-[0_0_40px_-10px_rgba(59,130,246,0.15)]">
         <CardHeader className="items-center space-y-4 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/20">
+              {/* Pulsing ring */}
+              <span
+                className="absolute inset-0 rounded-xl border-2 border-blue-400/30"
+                style={{ animation: "pulseRing 3s ease-in-out infinite" }}
+              />
               <Lock className="h-5 w-5 text-blue-400" />
             </div>
             <CardTitle className="text-2xl font-bold text-white">
@@ -106,6 +144,10 @@ export default function LoginPage() {
               {loading ? "Ingresando..." : "Ingresar"}
             </Button>
           </form>
+
+          <p className="mt-5 text-center text-xs text-slate-500">
+            Dashboard de monitoreo para Webflow
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -71,6 +71,12 @@ export function BarChart({
               />
             </>
           )}
+          <defs>
+            <linearGradient id={`barGradient-${yKey}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={1} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.6} />
+            </linearGradient>
+          </defs>
           <Tooltip
             contentStyle={{
               backgroundColor: "#0f1d32",
@@ -78,11 +84,14 @@ export function BarChart({
               borderRadius: 8,
               color: "#e2e8f0",
               fontSize: 12,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+              padding: "8px 12px",
             }}
-            labelStyle={{ color: "#94a3b8" }}
+            labelStyle={{ color: "#94a3b8", marginBottom: 4, fontWeight: 500 }}
+            itemStyle={{ color: "#e2e8f0", fontSize: 12 }}
             cursor={{ fill: "rgba(255,255,255,0.05)" }}
           />
-          <Bar dataKey={yKey} fill={color} radius={[4, 4, 0, 0]} />
+          <Bar dataKey={yKey} fill={`url(#barGradient-${yKey})`} radius={[4, 4, 0, 0]} />
         </RechartsBar>
       </ResponsiveContainer>
     </div>
