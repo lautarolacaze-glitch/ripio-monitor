@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ripio Monitor
 
-## Getting Started
+Dashboard profesional de monitoreo para ripio.com. Analiza clases CSS, SEO, performance, custom code y mas mediante scraping server-side con almacenamiento en SQLite.
 
-First, run the development server:
+## Requisitos
+
+- Node.js 18+
+- npm
+
+## Instalacion
+
+```bash
+git clone https://github.com/tu-usuario/ripio-monitor.git
+cd ripio-monitor
+npm install
+```
+
+## Configuracion
+
+Crear un archivo `.env.local` en la raiz del proyecto:
+
+```env
+DASHBOARD_PASSWORD=tu_contraseña_segura
+SITE_URL=https://ripio.com
+```
+
+## Desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000) en el navegador. Se redirigira a `/login` donde debes ingresar la contraseña configurada en `.env.local`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build de produccion
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Funcionalidades
 
-To learn more about Next.js, take a look at the following resources:
+- **Overview**: Estado del sitio, score general, historial de escaneos
+- **Clases CSS**: Tabla con todas las clases detectadas, frecuencia, paginas donde aparecen
+- **Performance**: Metricas de Core Web Vitals via PageSpeed Insights API
+- **SEO & Meta Tags**: Analisis de meta tags, headings, OG tags, canonical URLs
+- **Problemas**: Issues priorizados por severidad y categoria
+- **Custom Code**: Scripts, estilos inline, tracking pixels detectados
+- **Estadisticas**: Arbol de navegacion, assets, links internos vs externos
+- **Recomendaciones**: Panel auto-generado con checklist de optimizacion
+- **Configuracion**: Frecuencia de escaneo, URLs a monitorear, exportar reportes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Framework**: Next.js 16 (App Router)
+- **UI**: Tailwind CSS + shadcn/ui
+- **Base de datos**: SQLite (better-sqlite3)
+- **Scraping**: Cheerio
+- **Charts**: Recharts
+- **Animaciones**: Framer Motion
+- **Autenticacion**: Cookie HTTP-only con token
 
-## Deploy on Vercel
+## Seguridad
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Autenticacion por contraseña con cookie HTTP-only
+- Rate limiting en endpoints de escaneo
+- Validacion de URLs (bloqueo de IPs privadas)
+- Security headers (CSP, X-Frame-Options, HSTS, etc.)
+- Sanitizacion de inputs
